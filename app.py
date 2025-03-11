@@ -227,7 +227,7 @@ def detect_potholes(image):
             confidence = float(box.conf[0])  # Confidence score
 
             # Draw thicker bounding box with deep color
-            cv2.rectangle(image, (x1, y1), (x2, y2), (0, 255, 255), 4)  # Yellow box
+            cv2.rectangle(image, (x1, y1), (x2, y2), (0, 255, 0), 4)  # Yellow box
 
             # Create background for text
             label = f"{confidence:.2f}"
