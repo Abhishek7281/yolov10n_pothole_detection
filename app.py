@@ -205,16 +205,37 @@ def load_model():
 model = load_model()
 
 # Pothole Detection Function
+# def detect_potholes(image):
+#     results = model(image)
+
+#     for r in results:
+#         for box in r.boxes:
+#             x1, y1, x2, y2 = map(int, box.xyxy[0])
+#             confidence = float(box.conf[0])
+#             cv2.rectangle(image, (x1, y1), (x2, y2), (0, 255, 0), 2)
+#             cv2.putText(image, f"{confidence:.2f}", (x1, y1 - 10),
+#                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+
+#     return image
+
 def detect_potholes(image):
     results = model(image)
 
     for r in results:
         for box in r.boxes:
-            x1, y1, x2, y2 = map(int, box.xyxy[0])
-            confidence = float(box.conf[0])
-            cv2.rectangle(image, (x1, y1), (x2, y2), (0, 255, 0), 2)
-            cv2.putText(image, f"{confidence:.2f}", (x1, y1 - 10),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+            x1, y1, x2, y2 = map(int, box.xyxy[0])  # Get bounding box coordinates
+            confidence = float(box.conf[0])  # Confidence score
+
+            # Draw thicker bounding box with deep color
+            cv2.rectangle(image, (x1, y1), (x2, y2), (0, 255, 255), 4)  # Yellow box
+
+            # Create background for text
+            label = f"{confidence:.2f}"
+            (text_width, text_height), baseline = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 1.2, 3)
+            cv2.rectangle(image, (x1, y1 - text_height - 10), (x1 + text_width + 10, y1), (0, 255, 255), -1)  # Filled bg
+
+            # Put text over the rectangle
+            cv2.putText(image, label, (x1 + 5, y1 - 5), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 0, 0), 3, cv2.LINE_AA)  # Black text
 
     return image
 
