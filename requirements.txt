@@ -13,4 +13,4 @@ ultralytics
 opencv-python-headless
 Pillow
 numpy
-libgl1
+
