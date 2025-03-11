@@ -450,9 +450,9 @@ def main():
             # ✅ Display Original & Processed Images
             col1, col2 = st.columns(2)
             with col1:
-                st.image(image, caption="Original Image", width=725)
+                st.image(image, caption="Original Image", width=625)
             with col2:
-                st.image(detected_pil, caption="Detected Potholes", width=725)
+                st.image(detected_pil, caption="Detected Potholes", width=625)
 
             # ✅ Save & Download Processed Image
             temp_image_path = tempfile.NamedTemporaryFile(delete=False, suffix=".png").name
