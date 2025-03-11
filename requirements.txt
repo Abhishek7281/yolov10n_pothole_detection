@@ -1,3 +1,11 @@
+# streamlit
+# torch
+# torchvision
+# ultralytics
+# opencv-python-headless
+# Pillow
+# numpy
+
 streamlit
 torch
 torchvision
@@ -5,3 +13,4 @@ ultralytics
 opencv-python-headless
 Pillow
 numpy
+libgl1
