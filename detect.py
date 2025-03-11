@@ -5,7 +5,7 @@ import numpy as np
 from PIL import Image
 
 # Load the YOLOv10 Nano model
-model_path = "project_files/yolov10n.pt"
+model_path = "project_files/best.pt"
 device = "cuda" if torch.cuda.is_available() else "cpu"
 model = YOLO(model_path).to(device)
 
