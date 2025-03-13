@@ -314,30 +314,175 @@
 # if __name__ == "__main__":
 #     main()
 
+# import streamlit as st
+
+# # ✅ `st.set_page_config()` must be the FIRST Streamlit command!
+# st.set_page_config(page_title="YOLOv10n Pothole Detection", layout="wide")
+
+# import asyncio
+# import cv2
+# import numpy as np
+# from PIL import Image
+# import tempfile
+# import os
+# import torch
+# from ultralytics import YOLO
+
+# # ✅ Fix RuntimeError: no running event loop (Torch issue)
+# try:
+#     asyncio.get_running_loop()
+# except RuntimeError:
+#     asyncio.run(asyncio.sleep(0))
+
+# # ✅ Load YOLOv10n Model
+# @st.cache_resource()  # Cache model for efficiency
+# def load_model():
+#     model_path = "project_files/best.pt"  # Path to YOLOv10n model
+#     device = "cuda" if torch.cuda.is_available() else "cpu"
+#     model = YOLO(model_path).to(device)
+#     return model
+
+# model = load_model()
+
+# # ✅ Pothole Detection Function
+# def detect_potholes(image):
+#     """
+#     Detect potholes using YOLOv10n and apply consistent bounding boxes and text.
+#     """
+#     results = model(image)
+
+#     for r in results:
+#         for box in r.boxes:
+#             x1, y1, x2, y2 = map(int, box.xyxy[0])  # Bounding box coordinates
+#             confidence = float(box.conf[0])  # Confidence score
+
+#             # ✅ Define consistent styling
+#             bbox_color = (0, 255, 0)  # ✅ Green Bounding Box
+#             text_color = (0, 0, 0)  # Black Text
+#             thickness = 4  # Bold bounding box
+#             font_scale = 1.2
+#             font_thickness = 3
+
+#             # ✅ Draw Green bounding box
+#             cv2.rectangle(image, (x1, y1), (x2, y2), bbox_color, thickness)
+
+#             # ✅ Create background for text
+#             label = f"{confidence:.2f}"
+#             (text_width, text_height), _ = cv2.getTextSize(
+#                 label, cv2.FONT_HERSHEY_SIMPLEX, font_scale, font_thickness
+#             )
+#             cv2.rectangle(image, (x1, y1 - text_height - 10), 
+#                           (x1 + text_width + 10, y1), bbox_color, -1)  # Filled bg
+
+#             # ✅ Add text over the rectangle
+#             cv2.putText(image, label, (x1 + 5, y1 - 5), cv2.FONT_HERSHEY_SIMPLEX,
+#                         font_scale, text_color, font_thickness, cv2.LINE_AA)
+
+#     return image
+
+# # ✅ Streamlit UI
+# def main():
+#     st.title("🛣️ YOLOv10n Pothole Detection System")
+#     uploaded_file = st.file_uploader("Upload an image or video...", type=["jpg", "png", "jpeg", "mp4"])
+
+#     if uploaded_file is not None:
+#         is_video = uploaded_file.type.startswith("video/")
+
+#         if is_video:
+#             try:
+#                 # ✅ Save uploaded video
+#                 temp_video = tempfile.NamedTemporaryFile(delete=False, suffix=".mp4")
+#                 temp_video.write(uploaded_file.read())
+#                 temp_video_path = temp_video.name
+
+#                 # ✅ Read video
+#                 video = cv2.VideoCapture(temp_video_path)
+#                 output_video_path = tempfile.NamedTemporaryFile(delete=False, suffix=".mp4").name
+#                 fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+#                 fps = int(video.get(cv2.CAP_PROP_FPS))
+#                 frame_width = int(video.get(cv2.CAP_PROP_FRAME_WIDTH))
+#                 frame_height = int(video.get(cv2.CAP_PROP_FRAME_HEIGHT))
+#                 out = cv2.VideoWriter(output_video_path, fourcc, fps, (frame_width, frame_height))
+
+#                 # ✅ Process video frames
+#                 progress_bar = st.progress(0)
+#                 total_frames = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
+#                 frame_count = 0
+
+#                 while True:
+#                     ret, frame = video.read()
+#                     if not ret:
+#                         break
+#                     frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)  # Convert to RGB
+#                     detected_frame = detect_potholes(frame_rgb)
+#                     detected_frame = cv2.cvtColor(detected_frame, cv2.COLOR_RGB2BGR)  # Convert back for OpenCV
+#                     out.write(detected_frame)
+
+#                     frame_count += 1
+#                     progress_bar.progress(min(frame_count / total_frames, 1.0))
+
+#                 # ✅ Release resources
+#                 video.release()
+#                 out.release()
+#                 st.success("✅ Video processing complete!")
+
+#                 # ✅ Display Processed Video
+#                 st.video(output_video_path)
+
+#                 # ✅ Allow Download
+#                 with open(output_video_path, "rb") as file:
+#                     st.download_button("Download Processed Video", file, file_name="processed_video.mp4", mime="video/mp4")
+
+#                 # ✅ Cleanup
+#                 os.remove(temp_video_path)
+#                 os.remove(output_video_path)
+
+#             except Exception as e:
+#                 st.error(f"❌ Error processing video: {e}")
+
+#         else:
+#             # ✅ Process image
+#             image = Image.open(uploaded_file)
+#             img_array = np.array(image)
+#             detected_img = detect_potholes(img_array)
+#             detected_pil = Image.fromarray(detected_img)
+
+#             # ✅ Display Original & Processed Images
+#             col1, col2 = st.columns(2)
+#             with col1:
+#                 st.image(image, caption="Original Image", width=625)
+#             with col2:
+#                 st.image(detected_pil, caption="Detected Potholes", width=625)
+
+#             # ✅ Save & Download Processed Image
+#             temp_image_path = tempfile.NamedTemporaryFile(delete=False, suffix=".png").name
+#             detected_pil.save(temp_image_path)
+#             with open(temp_image_path, "rb") as file:
+#                 st.download_button("Download Processed Image", file, file_name="processed_image.png", mime="image/png")
+
+#             # ✅ Cleanup
+#             os.remove(temp_image_path)
+
+# if __name__ == "__main__":
+#     main()
+
+# Increase file size
 import streamlit as st
-
-# ✅ `st.set_page_config()` must be the FIRST Streamlit command!
-st.set_page_config(page_title="YOLOv10n Pothole Detection", layout="wide")
-
-import asyncio
+import os
 import cv2
 import numpy as np
 from PIL import Image
 import tempfile
-import os
 import torch
 from ultralytics import YOLO
 
-# ✅ Fix RuntimeError: no running event loop (Torch issue)
-try:
-    asyncio.get_running_loop()
-except RuntimeError:
-    asyncio.run(asyncio.sleep(0))
+# ✅ Increase File Upload Limit (Must be set in `.streamlit/config.toml` too)
+st.set_page_config(page_title="YOLOv10n Pothole Detection", layout="wide")
 
 # ✅ Load YOLOv10n Model
-@st.cache_resource()  # Cache model for efficiency
+@st.cache_resource()  # Cache model for faster processing
 def load_model():
-    model_path = "project_files/best.pt"  # Path to YOLOv10n model
+    model_path = "project_files/best.pt"  # ✅ Path to trained YOLOv10n model
     device = "cuda" if torch.cuda.is_available() else "cpu"
     model = YOLO(model_path).to(device)
     return model
@@ -347,34 +492,32 @@ model = load_model()
 # ✅ Pothole Detection Function
 def detect_potholes(image):
     """
-    Detect potholes using YOLOv10n and apply consistent bounding boxes and text.
+    Detect potholes using YOLOv10n and display bounding boxes & confidence scores.
     """
     results = model(image)
 
     for r in results:
         for box in r.boxes:
-            x1, y1, x2, y2 = map(int, box.xyxy[0])  # Bounding box coordinates
+            x1, y1, x2, y2 = map(int, box.xyxy[0])  # Get bounding box coordinates
             confidence = float(box.conf[0])  # Confidence score
 
-            # ✅ Define consistent styling
-            bbox_color = (0, 255, 0)  # ✅ Green Bounding Box
-            text_color = (0, 0, 0)  # Black Text
+            # ✅ Define styling
+            bbox_color = (0, 255, 0)  # Green bounding box
+            text_color = (0, 0, 0)  # Black text
             thickness = 4  # Bold bounding box
             font_scale = 1.2
             font_thickness = 3
 
-            # ✅ Draw Green bounding box
+            # ✅ Draw bounding box
             cv2.rectangle(image, (x1, y1), (x2, y2), bbox_color, thickness)
 
             # ✅ Create background for text
             label = f"{confidence:.2f}"
-            (text_width, text_height), _ = cv2.getTextSize(
-                label, cv2.FONT_HERSHEY_SIMPLEX, font_scale, font_thickness
-            )
+            (text_width, text_height), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, font_scale, font_thickness)
             cv2.rectangle(image, (x1, y1 - text_height - 10), 
                           (x1 + text_width + 10, y1), bbox_color, -1)  # Filled bg
 
-            # ✅ Add text over the rectangle
+            # ✅ Add confidence text
             cv2.putText(image, label, (x1 + 5, y1 - 5), cv2.FONT_HERSHEY_SIMPLEX,
                         font_scale, text_color, font_thickness, cv2.LINE_AA)
 
@@ -383,66 +526,64 @@ def detect_potholes(image):
 # ✅ Streamlit UI
 def main():
     st.title("🛣️ YOLOv10n Pothole Detection System")
-    uploaded_file = st.file_uploader("Upload an image or video...", type=["jpg", "png", "jpeg", "mp4"])
+
+    # ✅ File Uploader With Increased File Size Handling
+    uploaded_file = st.file_uploader("Upload an image or video (Up to 1GB)...", type=["jpg", "png", "jpeg", "mp4"])
 
     if uploaded_file is not None:
+        temp_dir = tempfile.mkdtemp()  # ✅ Use Temp Directory
+        file_path = os.path.join(temp_dir, uploaded_file.name)
+
+        # ✅ Save large files to disk instead of RAM
+        with open(file_path, "wb") as f:
+            f.write(uploaded_file.read())
+
+        file_size_mb = round(os.path.getsize(file_path) / (1024 * 1024), 2)
+        st.success(f"✅ File uploaded: {uploaded_file.name} (Size: {file_size_mb} MB)")
+
         is_video = uploaded_file.type.startswith("video/")
 
         if is_video:
-            try:
-                # ✅ Save uploaded video
-                temp_video = tempfile.NamedTemporaryFile(delete=False, suffix=".mp4")
-                temp_video.write(uploaded_file.read())
-                temp_video_path = temp_video.name
+            # ✅ Process video
+            video = cv2.VideoCapture(file_path)
+            output_video_path = os.path.join(temp_dir, "processed_video.mp4")
+            fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+            fps = int(video.get(cv2.CAP_PROP_FPS))
+            frame_width = int(video.get(cv2.CAP_PROP_FRAME_WIDTH))
+            frame_height = int(video.get(cv2.CAP_PROP_FRAME_HEIGHT))
+            out = cv2.VideoWriter(output_video_path, fourcc, fps, (frame_width, frame_height))
 
-                # ✅ Read video
-                video = cv2.VideoCapture(temp_video_path)
-                output_video_path = tempfile.NamedTemporaryFile(delete=False, suffix=".mp4").name
-                fourcc = cv2.VideoWriter_fourcc(*"mp4v")
-                fps = int(video.get(cv2.CAP_PROP_FPS))
-                frame_width = int(video.get(cv2.CAP_PROP_FRAME_WIDTH))
-                frame_height = int(video.get(cv2.CAP_PROP_FRAME_HEIGHT))
-                out = cv2.VideoWriter(output_video_path, fourcc, fps, (frame_width, frame_height))
+            progress_bar = st.progress(0)
+            total_frames = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
+            frame_count = 0
 
-                # ✅ Process video frames
-                progress_bar = st.progress(0)
-                total_frames = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
-                frame_count = 0
+            while True:
+                ret, frame = video.read()
+                if not ret:
+                    break
+                frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)  # Convert to RGB
+                detected_frame = detect_potholes(frame_rgb)
+                detected_frame = cv2.cvtColor(detected_frame, cv2.COLOR_RGB2BGR)  # Convert back for OpenCV
+                out.write(detected_frame)
 
-                while True:
-                    ret, frame = video.read()
-                    if not ret:
-                        break
-                    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)  # Convert to RGB
-                    detected_frame = detect_potholes(frame_rgb)
-                    detected_frame = cv2.cvtColor(detected_frame, cv2.COLOR_RGB2BGR)  # Convert back for OpenCV
-                    out.write(detected_frame)
+                frame_count += 1
+                progress_bar.progress(min(frame_count / total_frames, 1.0))
 
-                    frame_count += 1
-                    progress_bar.progress(min(frame_count / total_frames, 1.0))
+            # ✅ Release resources
+            video.release()
+            out.release()
+            st.success("✅ Video processing complete!")
 
-                # ✅ Release resources
-                video.release()
-                out.release()
-                st.success("✅ Video processing complete!")
+            # ✅ Display Processed Video
+            st.video(output_video_path)
 
-                # ✅ Display Processed Video
-                st.video(output_video_path)
-
-                # ✅ Allow Download
-                with open(output_video_path, "rb") as file:
-                    st.download_button("Download Processed Video", file, file_name="processed_video.mp4", mime="video/mp4")
-
-                # ✅ Cleanup
-                os.remove(temp_video_path)
-                os.remove(output_video_path)
-
-            except Exception as e:
-                st.error(f"❌ Error processing video: {e}")
+            # ✅ Allow Download
+            with open(output_video_path, "rb") as file:
+                st.download_button("Download Processed Video", file, file_name="processed_video.mp4", mime="video/mp4")
 
         else:
             # ✅ Process image
-            image = Image.open(uploaded_file)
+            image = Image.open(file_path)
             img_array = np.array(image)
             detected_img = detect_potholes(img_array)
             detected_pil = Image.fromarray(detected_img)
@@ -455,13 +596,11 @@ def main():
                 st.image(detected_pil, caption="Detected Potholes", width=625)
 
             # ✅ Save & Download Processed Image
-            temp_image_path = tempfile.NamedTemporaryFile(delete=False, suffix=".png").name
-            detected_pil.save(temp_image_path)
-            with open(temp_image_path, "rb") as file:
+            output_image_path = os.path.join(temp_dir, "processed_image.png")
+            detected_pil.save(output_image_path)
+            with open(output_image_path, "rb") as file:
                 st.download_button("Download Processed Image", file, file_name="processed_image.png", mime="image/png")
-
-            # ✅ Cleanup
-            os.remove(temp_image_path)
 
 if __name__ == "__main__":
     main()
+
